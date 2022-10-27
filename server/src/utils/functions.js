@@ -21,7 +21,7 @@ module.exports.createWhereForAllContests = (
   }
   Object.assign(object.where, {
     status: {
-      [ bd.Sequelize.Op.or ]: [
+      [ dbSequelize.Op.or ]: [
         CONSTANTS.CONTEST_STATUS_FINISHED,
         CONSTANTS.CONTEST_STATUS_ACTIVE,
       ],
@@ -32,7 +32,7 @@ module.exports.createWhereForAllContests = (
 };
 
 function getPredicateTypes (index) {
-  return { [ bd.Sequelize.Op.or ]: [types[ index ].split(',')] };
+  return { [ dbSequelize.Op.or ]: [types[ index ].split(',')] };
 }
 
 const types = [

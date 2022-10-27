@@ -13,7 +13,7 @@ module.exports.dataForContest = async (req, res, next) => {
     console.log(req.body, characteristic1, characteristic2);
     const types = [characteristic1, characteristic2, 'industry'].filter(Boolean);
 
-    const characteristics = await db.Selects.findAll({
+    const characteristics = await db.Select.findAll({
       where: {
         type: {
           [ db.Sequelize.Op.or ]: types,
@@ -38,10 +38,10 @@ module.exports.dataForContest = async (req, res, next) => {
 
 module.exports.getContestById = async (req, res, next) => {
   try {
-    let contestInfo = await db.Contests.findOne({
+    let contestInfo = await db.Contest.findOne({
       where: { id: req.headers.contestid },
       order: [
-        [db.Offers, 'id', 'asc'],
+        [db.Offer, 'id', 'asc'],
       ],
       include: [
         {
@@ -57,7 +57,7 @@ module.exports.getContestById = async (req, res, next) => {
           },
         },
         {
-          model: db.Offers,
+          model: db.Offer,
           required: false,
           where: req.tokenData.role === CONSTANTS.CREATOR
             ? { userId: req.tokenData.userId }
@@ -77,7 +77,7 @@ module.exports.getContestById = async (req, res, next) => {
               },
             },
             {
-              model: db.Ratings,
+              model: db.Rating,
               required: false,
               where: { userId: req.tokenData.userId },
               attributes: { exclude: ['userId', 'offerId'] },
@@ -100,7 +100,7 @@ module.exports.getContestById = async (req, res, next) => {
 };
 
 module.exports.downloadFile = async (req, res, next) => {
-  const file = CONSTANTS.CONTESTS_DEFAULT_DIR + req.params.fileName;
+  const file = CONSTANTS.Contest_DEFAULT_DIR + req.params.fileName;
   res.download(file);
 };
 
@@ -155,7 +155,7 @@ const rejectOffer = async (offerId, creatorId, contestId) => {
 
 const resolveOffer = async (
   contestId, creatorId, orderId, offerId, priority, transaction) => {
-  const finishedContest = await contestQueries.updateContestStatus({
+  const finishedContest = await contestQueries.updateContesttatus({
     status: db.sequelize.literal(`   CASE
             WHEN "id"=${ contestId }  AND "orderId"='${ orderId }' THEN '${ CONSTANTS.CONTEST_STATUS_FINISHED }'
             WHEN "orderId"='${ orderId }' AND "priority"=${ priority +
@@ -215,15 +215,15 @@ module.exports.setOfferStatus = async (req, res, next) => {
   }
 };
 
-module.exports.getCustomersContests = (req, res, next) => {
-  db.Contests.findAll({
+module.exports.getCustomersContest = (req, res, next) => {
+  db.Contest.findAll({
     where: { status: req.headers.status, userId: req.tokenData.userId },
     limit: req.body.limit,
     offset: req.body.offset ? req.body.offset : 0,
     order: [['id', 'DESC']],
     include: [
       {
-        model: db.Offers,
+        model: db.Offer,
         required: false,
         attributes: ['id'],
       },
@@ -244,14 +244,14 @@ module.exports.getCustomersContests = (req, res, next) => {
 module.exports.getContests = (req, res, next) => {
   const predicates = UtilFunctions.createWhereForAllContests(req.body.typeIndex,
     req.body.contestId, req.body.industry, req.body.awardSort);
-  db.Contests.findAll({
+  db.Contest.findAll({
     where: predicates.where,
     order: predicates.order,
     limit: req.body.limit,
     offset: req.body.offset ? req.body.offset : 0,
     include: [
       {
-        model: db.Offers,
+        model: db.Offer,
         required: req.body.ownEntries,
         where: req.body.ownEntries ? { userId: req.tokenData.userId } : {},
         attributes: ['id'],
